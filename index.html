@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Case Study Search</title>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 20px;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+        }
+        .search-box, .upload-box {
+            margin-bottom: 20px;
+        }
+        .result-item {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+      <script src="https://cdn.tailwindcss.com"></script>
+      <script>
+        tailwind.config = {
+          theme: {
+            extend: {
+              colors: {
+                clifford: '#da373d',
+              }
+            }
+          }
+        }
+      </script>
+</head>
+<body class="bg-[#0d1b2a] text-[#f2e9e4] p-10">
+    <div class="container flex flex-col justify-center items-center md:w-[80rem]">
+        <h1 class="text-4xl md:text-5xl text-center md:text-start font-extrabold w-full">Case Study Search</h1>
+        <p class="w-full text-lg font-semibold">A web app where you can <br class="md:hidden">Provide, Store custom data and semantic search on them</p>
+        <div class="flex flex-col w-full mt-10">
+            <form id="uploadForm" class="flex flex-col gap-4 justify-center items-center" enctype="multipart/form-data">
+                <label for="fileInput" class="text-xl font-semibold">Select File</label>
+                <input type="file" class="hidden" name="file" id="fileInput">
+                <button type="button" onclick="uploadFile()"  class="bg-white w-[20rem] text-black" style="padding: 10px;">Upload PDF</button>
+            </form>
+            <div id="uploadMessage"></div>
+        </div>
+        <div id="results" class="w-full mt-10"></div>
+        <div class="search-box w-full mb-4 md:w-[70rem] fixed bottom-0">
+            <div class="flex justify-center items-center relative w-full px-4">
+                <input type="text" id="searchQuery" placeholder="Enter your query" class="relative text-black w-full outline-none placeholder:text-md placeholder:font-medium p-2 border border-gray-300 rounded-full">
+                <button onclick="searchDocs()" class=" absolute right-5 w-[2.5rem] h-[2.2rem] bg-blue-500 text-white rounded-full">
+                    <i class="fas fa-search text-black"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function searchDocs() {
+            const query = document.getElementById('searchQuery').value;
+            const response = await fetch(`http://127.0.0.1:5000/docs?q=${encodeURIComponent(query)}`);
+            const data = await response.json();
+
+            const resultsContainer = document.getElementById('results');
+            resultsContainer.innerHTML = '';
+
+            if (data.length === 0) {
+                resultsContainer.innerHTML = '<p>No results found.</p>';
+                return;
+            }
+
+            data.forEach(item => {
+                const resultItem = document.createElement('div');
+                resultItem.className = 'result-item';
+
+                const filename = document.createElement('h3');
+                filename.textContent = `File: ${item.filename}`;
+                resultItem.appendChild(filename);
+
+                const title = document.createElement('p');
+                title.textContent = item.titles;
+                resultItem.appendChild(title);
+
+                resultsContainer.appendChild(resultItem);
+            });
+        }
+
+        async function uploadFile() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            if (!file) {
+                document.getElementById('uploadMessage').innerHTML = '<p>No file selected.</p>';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const response = await fetch('http://127.0.0.1:5000/upload', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+            document.getElementById('uploadMessage').innerHTML = `<p>${data.message}</p>`;
+        }
+    </script>
+</body>
+</html>
